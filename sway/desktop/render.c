@@ -442,6 +442,8 @@ static void render_titlebar(struct sway_output *output,
 	int titlebar_h_padding = config->titlebar_h_padding;
 	int titlebar_v_padding = config->titlebar_v_padding;
 	enum alignment title_align = config->title_align;
+    //mod
+    int font_height = output->font_height;
 
 	// Single pixel bar above title
 	memcpy(&color, colors->border, sizeof(float) * 4);
@@ -455,7 +457,7 @@ static void render_titlebar(struct sway_output *output,
 
 	// Single pixel bar below title
 	box.x = x;
-	box.y = y + container_titlebar_height() - titlebar_border_thickness;
+	box.y = y + container_titlebar_height(output) - titlebar_border_thickness;
 	box.width = width;
 	box.height = titlebar_border_thickness;
 	scale_box(&box, output_scale);
@@ -465,7 +467,7 @@ static void render_titlebar(struct sway_output *output,
 	box.x = x;
 	box.y = y + titlebar_border_thickness;
 	box.width = titlebar_border_thickness;
-	box.height = container_titlebar_height() - titlebar_border_thickness * 2;
+	box.height = container_titlebar_height(output) - titlebar_border_thickness * 2;
 	scale_box(&box, output_scale);
 	render_rect(output, output_damage, &box, color);
 
@@ -473,7 +475,7 @@ static void render_titlebar(struct sway_output *output,
 	box.x = x + width - titlebar_border_thickness;
 	box.y = y + titlebar_border_thickness;
 	box.width = titlebar_border_thickness;
-	box.height = container_titlebar_height() - titlebar_border_thickness * 2;
+	box.height = container_titlebar_height(output) - titlebar_border_thickness * 2;
 	scale_box(&box, output_scale);
 	render_rect(output, output_damage, &box, color);
 
@@ -486,7 +488,7 @@ static void render_titlebar(struct sway_output *output,
 	int ob_inner_width = scale_length(inner_width, inner_x, output_scale);
 	int ob_bg_height = scale_length(
 			(titlebar_v_padding - titlebar_border_thickness) * 2 +
-			config->font_height, bg_y, output_scale);
+			font_height, bg_y, output_scale);
 
 	// Marks
 	int ob_marks_x = 0; // output-buffer-local
@@ -657,7 +659,7 @@ static void render_titlebar(struct sway_output *output,
 	box.y = y + titlebar_border_thickness;
 	box.width = titlebar_h_padding - titlebar_border_thickness;
 	box.height = (titlebar_v_padding - titlebar_border_thickness) * 2 +
-		config->font_height;
+		font_height;
 	scale_box(&box, output_scale);
 	int left_x = ob_left_x + round(output_x * output_scale);
 	if (box.x + box.width < left_x) {
@@ -670,7 +672,7 @@ static void render_titlebar(struct sway_output *output,
 	box.y = y + titlebar_border_thickness;
 	box.width = titlebar_h_padding - titlebar_border_thickness;
 	box.height = (titlebar_v_padding - titlebar_border_thickness) * 2 +
-		config->font_height;
+		font_height;
 	scale_box(&box, output_scale);
 	int right_rx = ob_right_x + ob_right_width + round(output_x * output_scale);
 	if (right_rx < box.x) {
@@ -854,7 +856,7 @@ static void render_containers_stacked(struct sway_output *output,
 	}
 	struct sway_container *current = parent->active_child;
 	struct border_colors *current_colors = &config->border_colors.unfocused;
-	size_t titlebar_height = container_titlebar_height();
+	size_t titlebar_height = container_titlebar_height(output);
 
 	// Render titles
 	for (int i = 0; i < parent->children->length; ++i) {

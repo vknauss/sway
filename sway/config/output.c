@@ -15,6 +15,7 @@
 #include "sway/output.h"
 #include "sway/tree/root.h"
 #include "log.h"
+#include "pango.h"
 #include "util.h"
 
 #if WLR_HAS_DRM_BACKEND
@@ -76,6 +77,13 @@ struct output_config *new_output_config(const char *name) {
 	oc->adaptive_sync = -1;
 	oc->render_bit_depth = RENDER_BIT_DEPTH_DEFAULT;
 	oc->power = -1;
+    // mod
+    oc->font = NULL;
+    oc->font_description = NULL;
+    oc->font_height = -1;
+    oc->font_baseline = -1;
+    oc->pango_markup = false;
+
 	return oc;
 }
 
@@ -140,6 +148,47 @@ void merge_output_config(struct output_config *dst, struct output_config *src) {
 	if (src->power != -1) {
 		dst->power = src->power;
 	}
+    // mod
+    if (src->font)
+    {
+        free(dst->font);
+        if (!(dst->font = strdup(src->font)))
+        {
+            sway_abort("mod - failed strdup in merge_output_config");
+        }
+    }
+    if (src->font_description)
+    {
+        pango_font_description_free(dst->font_description);
+        dst->font_description = pango_font_description_copy(src->font_description);
+        dst->pango_markup = src->pango_markup;
+    }
+    if (src->font_height != -1)
+    {
+        dst->font_height = src->font_height;
+    }
+    if (src->font_baseline != -1)
+    {
+        dst->font_baseline = src->font_baseline;
+    }
+
+    /* if (src->font_description)
+    {
+        pango_font_description_free(dst->font_description);
+        if (!(dst->font_description = pango_font_description_copy(src->font_description)))
+        {
+            sway_abort("mod - failed pango_font_description_copy in merge_output_config");
+        }
+        dst->pango_markup = src->pango_markup;
+    }
+    if (src->font_height != -1)
+    {
+        dst->font_height = src->font_height;
+    }
+    if (src->font_baseline != -1)
+    {
+        dst->font_baseline = src->font_baseline;
+    } */
 }
 
 static void merge_wildcard_on_all(struct output_config *wildcard) {
@@ -599,6 +648,33 @@ bool apply_output_config(struct output_config *oc, struct sway_output *output) {
 	input_manager_configure_all_inputs();
 	// Reconfigure the cursor images, since the scale may have changed.
 	input_manager_configure_xcursor();
+
+    // mod
+    if (oc)
+    {
+        pango_font_description_free(output->font_description);
+        output->font_description = NULL;
+        if (oc->font_description)
+        {
+            output->font_description = pango_font_description_copy(oc->font_description);
+            output->pango_markup = oc->pango_markup;
+        }
+        else
+        {
+            output->font_description = pango_font_description_from_string(oc->font);
+            output->pango_markup = false;
+        }
+        if (-1 == oc->font_baseline || -1 == oc->font_height)
+        {
+            get_text_metrics(output->font_description, &output->font_height, &output->font_baseline);
+        }
+        else
+        {
+            output->font_baseline = oc->font_baseline;
+            output->font_height = oc->font_height;
+        }
+    }
+
 	return true;
 }
 
@@ -629,6 +705,8 @@ static void default_output_config(struct output_config *oc,
 	oc->subpixel = output->detected_subpixel;
 	oc->transform = WL_OUTPUT_TRANSFORM_NORMAL;
 	oc->max_render_time = 0;
+    // mod
+	if (!(oc->font = strdup("monospace 10"))) sway_abort();
 }
 
 static struct output_config *get_output_config(char *identifier,
@@ -777,6 +855,8 @@ void free_output_config(struct output_config *oc) {
 	free(oc->name);
 	free(oc->background);
 	free(oc->background_option);
+    // mod
+    free(oc->font);
 	free(oc);
 }
 

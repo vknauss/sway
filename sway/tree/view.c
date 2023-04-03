@@ -304,10 +304,10 @@ void view_autoconfigure(struct sway_view *view) {
 		if (show_titlebar) {
 			enum sway_container_layout layout = container_parent_layout(con);
 			if (layout == L_TABBED) {
-				y_offset = container_titlebar_height();
+				y_offset = container_titlebar_height(output);
 				con->pending.border_top = false;
 			} else if (layout == L_STACKED) {
-				y_offset = container_titlebar_height() * siblings->length;
+				y_offset = container_titlebar_height(output) * siblings->length;
 				con->pending.border_top = false;
 			}
 		}
@@ -344,8 +344,8 @@ void view_autoconfigure(struct sway_view *view) {
 			height = con->pending.height - y_offset
 				- con->pending.border_thickness * con->pending.border_bottom;
 		} else {
-			y = con->pending.y + container_titlebar_height();
-			height = con->pending.height - container_titlebar_height()
+			y = con->pending.y + container_titlebar_height(output);
+			height = con->pending.height - container_titlebar_height(output)
 				- con->pending.border_thickness * con->pending.border_bottom;
 		}
 		break;
@@ -1222,13 +1222,13 @@ static char *escape_pango_markup(const char *buffer) {
 	return escaped_title;
 }
 
-static size_t append_prop(char *buffer, const char *value) {
+static size_t append_prop(char *buffer, const char *value, /* mod */ bool pango_markup) {
 	if (!value) {
 		return 0;
 	}
 	// If using pango_markup in font, we need to escape all markup chars
 	// from values to make sure tags are not inserted by clients
-	if (config->pango_markup) {
+	if (pango_markup) {
 		char *escaped_value = escape_pango_markup(value);
 		lenient_strcat(buffer, escaped_value);
 		size_t len = strlen(escaped_value);
@@ -1245,8 +1245,11 @@ static size_t append_prop(char *buffer, const char *value) {
  * If buffer is not NULL, also populate the buffer with the formatted title.
  */
 static size_t parse_title_format(struct sway_view *view, char *buffer) {
+    // mod
+    struct sway_output *output = container_get_effective_output(view->container);
+    bool pango_markup = (output) ? output->pango_markup : false;
 	if (!view->title_format || strcmp(view->title_format, "%title") == 0) {
-		return append_prop(buffer, view_get_title(view));
+		return append_prop(buffer, view_get_title(view), pango_markup);
 	}
 
 	size_t len = 0;
@@ -1259,19 +1262,19 @@ static size_t parse_title_format(struct sway_view *view, char *buffer) {
 		format = next;
 
 		if (strncmp(next, "%title", 6) == 0) {
-			len += append_prop(buffer, view_get_title(view));
+			len += append_prop(buffer, view_get_title(view), pango_markup);
 			format += 6;
 		} else if (strncmp(next, "%app_id", 7) == 0) {
-			len += append_prop(buffer, view_get_app_id(view));
+			len += append_prop(buffer, view_get_app_id(view), pango_markup);
 			format += 7;
 		} else if (strncmp(next, "%class", 6) == 0) {
-			len += append_prop(buffer, view_get_class(view));
+			len += append_prop(buffer, view_get_class(view), pango_markup);
 			format += 6;
 		} else if (strncmp(next, "%instance", 9) == 0) {
-			len += append_prop(buffer, view_get_instance(view));
+			len += append_prop(buffer, view_get_instance(view), pango_markup);
 			format += 9;
 		} else if (strncmp(next, "%shell", 6) == 0) {
-			len += append_prop(buffer, view_get_shell(view));
+			len += append_prop(buffer, view_get_shell(view), pango_markup);
 			format += 6;
 		} else {
 			lenient_strcat(buffer, "%");

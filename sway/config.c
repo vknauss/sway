@@ -164,7 +164,7 @@ void free_config(struct sway_config *config) {
 	free(config->floating_scroll_down_cmd);
 	free(config->floating_scroll_left_cmd);
 	free(config->floating_scroll_right_cmd);
-	free(config->font);
+	// free(config->font);
 	free(config->swaybg_command);
 	free(config->swaynag_command);
 	free((char *)config->current_config_path);
@@ -242,8 +242,9 @@ static void config_defaults(struct sway_config *config) {
 	if (!(config->floating_scroll_right_cmd = strdup(""))) goto cleanup;
 	config->default_layout = L_NONE;
 	config->default_orientation = L_NONE;
-	if (!(config->font = strdup("monospace 10"))) goto cleanup;
-	config->font_description = pango_font_description_from_string(config->font);
+    // mod - TODO: figure out defaults
+	// if (!(config->font = strdup("monospace 10"))) goto cleanup;
+	// config->font_description = pango_font_description_from_string(config->font);
 	config->urgent_timeout = 500;
 	config->focus_on_window_activation = FOWA_URGENT;
 	config->popup_during_fullscreen = POPUP_SMART;
@@ -552,7 +553,8 @@ bool load_main_config(const char *file, bool is_active, bool validating) {
 	}
 
 	// Only really necessary if not explicitly `font` is set in the config.
-	config_update_font_height();
+    // mod - this should be done when we apply output configs
+	// config_update_font_height();
 
 	if (is_active && !validating) {
 		input_manager_verify_fallback_seat();
@@ -1005,15 +1007,25 @@ int workspace_output_cmp_workspace(const void *a, const void *b) {
 }
 
 
-void config_update_font_height(void) {
-	int prev_max_height = config->font_height;
+/* void config_update_font_height(void) {
+    bool any_resized = false;
+    for (int i = 0; i < config->output_configs->length; ++i) {
+        struct output_config *oc = config->output_configs->items[i];
+        if (!oc) {
+            continue;
+        }
 
-	get_text_metrics(config->font_description, &config->font_height, &config->font_baseline);
+        int prev_max_height = oc->font_height;
+        get_text_metrics(oc->font_description, &oc->font_height, &oc->font_baseline);
+        if (oc->font_height != prev_max_height) {
+            any_resized = true;
+        }
+    }
 
-	if (config->font_height != prev_max_height) {
-		arrange_root();
-	}
-}
+    if (any_resized) {
+        arrange_root();
+    }
+} */
 
 static void translate_binding_list(list_t *bindings, list_t *bindsyms,
 		list_t *bindcodes) {

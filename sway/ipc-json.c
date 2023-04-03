@@ -547,7 +547,7 @@ static void get_deco_rect(struct sway_container *c, struct wlr_box *deco_rect) {
 		deco_rect->y = c->pending.y - c->pending.workspace->y;
 	}
 	deco_rect->width = c->pending.width;
-	deco_rect->height = container_titlebar_height();
+	deco_rect->height = container_titlebar_height(container_get_effective_output(c));
 
 	if (!container_is_floating(c)) {
 		if (parent_layout == L_TABBED) {
@@ -1203,7 +1203,8 @@ json_object *ipc_json_describe_bar_config(struct bar_config *bar) {
 	json_object_object_add(json, "status_command", bar->status_command ?
 			json_object_new_string(bar->status_command) : NULL);
 	json_object_object_add(json, "font",
-			json_object_new_string((bar->font) ? bar->font : config->font));
+			// json_object_new_string((bar->font) ? bar->font : config->font));
+			bar->font ? json_object_new_string(bar->font) : NULL);
 
 	json_object *gaps = json_object_new_object();
 	json_object_object_add(gaps, "top",
@@ -1242,7 +1243,8 @@ json_object *ipc_json_describe_bar_config(struct bar_config *bar) {
 			json_object_new_boolean(bar->verbose));
 	json_object_object_add(json, "pango_markup",
 			json_object_new_boolean(bar->pango_markup == PANGO_MARKUP_DEFAULT
-											? config->pango_markup
+											// ? config->pango_markup
+                                            ? false
 											: bar->pango_markup));
 
 	json_object *colors = json_object_new_object();

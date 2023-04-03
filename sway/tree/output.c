@@ -107,6 +107,13 @@ struct sway_output *output_create(struct wlr_output *wlr_output) {
 		wl_list_init(&output->layers[i]);
 	}
 
+    // mod
+    output->font_description = NULL;
+    output->font_baseline = -1;
+    output->font_height = -1;
+    output->pango_markup = false;
+    // \mod
+
 	return output;
 }
 
@@ -238,6 +245,8 @@ void output_destroy(struct sway_output *output) {
 				"which is still referenced by transactions")) {
 		return;
 	}
+    // mod
+    pango_font_description_free(output->font_description);
 	list_free(output->workspaces);
 	list_free(output->current.workspaces);
 	wl_event_source_remove(output->repaint_timer);

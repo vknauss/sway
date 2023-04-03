@@ -61,7 +61,7 @@ sway_sources = files(
 	'commands/focus_follows_mouse.c',
 	'commands/focus_on_window_activation.c',
 	'commands/focus_wrapping.c',
-	'commands/font.c',
+	# 'commands/font.c',
 	'commands/for_window.c',
 	'commands/force_display_urgency_hint.c',
 	'commands/force_focus_wrapping.c',
@@ -191,6 +191,7 @@ sway_sources = files(
 	'commands/output/disable.c',
 	'commands/output/dpms.c',
 	'commands/output/enable.c',
+    'commands/output/font.c', # mod 
 	'commands/output/max_render_time.c',
 	'commands/output/mode.c',
 	'commands/output/position.c',

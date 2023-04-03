@@ -67,7 +67,8 @@ static const struct cmd_handler handlers[] = {
 	{ "focus_follows_mouse", cmd_focus_follows_mouse },
 	{ "focus_on_window_activation", cmd_focus_on_window_activation },
 	{ "focus_wrapping", cmd_focus_wrapping },
-	{ "font", cmd_font },
+    // mod - TODO: find a way to handle font commands (output?)
+	// { "font", cmd_font },
 	{ "for_window", cmd_for_window },
 	{ "force_display_urgency_hint", cmd_force_display_urgency_hint },
 	{ "force_focus_wrapping", cmd_force_focus_wrapping },

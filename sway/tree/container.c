@@ -223,7 +223,7 @@ static struct sway_container *container_at_tabbed(struct sway_node *parent,
 	}
 
 	// Tab titles
-	int title_height = container_titlebar_height();
+	int title_height = container_titlebar_height(node_get_output(parent));
 	if (ly < box.y + title_height) {
 		int tab_width = box.width / children->length;
 		int child_index = (lx - box.x) / tab_width;
@@ -255,7 +255,7 @@ static struct sway_container *container_at_stacked(struct sway_node *parent,
 	list_t *children = node_get_children(parent);
 
 	// Title bars
-	int title_height = container_titlebar_height();
+	int title_height = container_titlebar_height(node_get_output(parent));
 	if (title_height > 0) {
 		int child_index = (ly - box.y) / title_height;
 		if (child_index < children->length) {
@@ -493,12 +493,13 @@ struct sway_output *container_get_effective_output(struct sway_container *con) {
 	return con->outputs->items[con->outputs->length - 1];
 }
 
+// modified to use per-output font
 static void render_titlebar_text_texture(struct sway_output *output,
 		struct sway_container *con, struct wlr_texture **texture,
 		struct border_colors *class, bool pango_markup, char *text) {
 	double scale = output->wlr_output->scale;
 	int width = 0;
-	int height = config->font_height * scale;
+	int height = output->font_height * scale;
 	int baseline;
 
 	// We must use a non-nil cairo_t for cairo_set_font_options to work.
@@ -516,17 +517,18 @@ static void render_titlebar_text_texture(struct sway_output *output,
 			to_cairo_subpixel_order(output->wlr_output->subpixel));
 	}
 	cairo_set_font_options(c, fo);
-	get_text_size(c, config->font_description, &width, NULL, &baseline, scale,
-			config->pango_markup, "%s", text);
+	get_text_size(c, output->font_description, &width, NULL, &baseline, scale,
+			output->pango_markup, "%s", text);
 	cairo_surface_destroy(dummy_surface);
 	cairo_destroy(c);
 
 	if (width == 0 || height == 0) {
+        cairo_font_options_destroy(fo);
 		return;
 	}
 
-	if (height > config->font_height * scale) {
-		height = config->font_height * scale;
+	if (height > output->font_height * scale) {
+		height = output->font_height * scale;
 	}
 
 	cairo_surface_t *surface = cairo_image_surface_create(
@@ -548,9 +550,9 @@ static void render_titlebar_text_texture(struct sway_output *output,
 	PangoContext *pango = pango_cairo_create_context(cairo);
 	cairo_set_source_rgba(cairo, class->text[0], class->text[1],
 			class->text[2], class->text[3]);
-	cairo_move_to(cairo, 0, config->font_baseline * scale - baseline);
+	cairo_move_to(cairo, 0, output->font_baseline * scale - baseline);
 
-	render_text(cairo, config->font_description, scale, pango_markup, "%s", text);
+	render_text(cairo, output->font_description, scale, pango_markup, "%s", text);
 
 	cairo_surface_flush(surface);
 	unsigned char *data = cairo_image_surface_get_data(surface);
@@ -578,7 +580,7 @@ static void update_title_texture(struct sway_container *con,
 	}
 
 	render_titlebar_text_texture(output, con, texture, class,
-		config->pango_markup, con->formatted_title);
+		output->pango_markup, con->formatted_title);
 }
 
 void container_update_title_textures(struct sway_container *container) {
@@ -669,8 +671,10 @@ void container_update_representation(struct sway_container *con) {
 	}
 }
 
-size_t container_titlebar_height(void) {
-	return config->font_height + config->titlebar_v_padding * 2;
+// mod
+size_t container_titlebar_height(struct sway_output *output) {
+    if (!output) sway_abort("in container_titlebar_height - handle null output");
+	return output->font_height + config->titlebar_v_padding * 2;
 }
 
 void floating_calculate_constraints(int *min_width, int *max_width,
@@ -925,7 +929,7 @@ void container_set_geometry_from_content(struct sway_container *con) {
 	if (con->pending.border != B_CSD && !con->pending.fullscreen_mode) {
 		border_width = con->pending.border_thickness * (con->pending.border != B_NONE);
 		top = con->pending.border == B_NORMAL ?
-			container_titlebar_height() : border_width;
+			container_titlebar_height(container_get_effective_output(con)) : border_width;
 	}
 
 	con->pending.x = con->pending.content_x - border_width;

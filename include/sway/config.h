@@ -284,6 +284,14 @@ struct output_config {
 	int adaptive_sync;
 	enum render_bit_depth render_bit_depth;
 
+    // mod - testing
+	char *font; // Used for IPC.
+	PangoFontDescription *font_description; // Used internally for rendering and validating.
+	int font_height;
+	int font_baseline;
+	bool pango_markup;
+    // \mod - testing
+
 	char *background;
 	char *background_option;
 	char *background_fallback;
@@ -501,11 +509,11 @@ struct sway_config {
 	char *floating_scroll_right_cmd;
 	enum sway_container_layout default_orientation;
 	enum sway_container_layout default_layout;
-	char *font; // Used for IPC.
-	PangoFontDescription *font_description; // Used internally for rendering and validating.
-	int font_height;
-	int font_baseline;
-	bool pango_markup;
+	// char *font; // Used for IPC.
+	// PangoFontDescription *font_description; // Used internally for rendering and validating.
+	// int font_height;
+	// int font_baseline;
+	// bool pango_markup;
 	int titlebar_border_thickness;
 	int titlebar_h_padding;
 	int titlebar_v_padding;
@@ -725,7 +733,7 @@ void free_workspace_config(struct workspace_config *wsc);
  * If the height has changed, all containers will be rearranged to take on the
  * new size.
  */
-void config_update_font_height(void);
+// void config_update_font_height(void);
 
 /**
  * Convert bindsym into bindcode using the first configured layout.

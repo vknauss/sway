@@ -57,6 +57,12 @@ struct sway_output {
 	uint32_t refresh_nsec;
 	int max_render_time; // In milliseconds
 	struct wl_event_source *repaint_timer;
+
+    // mod
+	PangoFontDescription *font_description; // Used internally for rendering and validating.
+	int font_height;
+	int font_baseline;
+	bool pango_markup;
 };
 
 struct sway_output_non_desktop {
